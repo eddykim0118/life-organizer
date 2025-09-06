@@ -21,6 +21,7 @@ export function WeekView() {
   const [unscheduled, setUnscheduled] = useState<Task[]>([])
   const gridRef = useRef<HTMLDivElement>(null)
   const [dragSel, setDragSel] = useState<{ dayIndex: number, y1: number, y2: number } | null>(null)
+  const draggingRef = useRef<{ dayIndex: number; yStart: number } | null>(null)
 
   useEffect(() => {
     refresh()
@@ -93,19 +94,33 @@ export function WeekView() {
 
   function onMouseDown(dayIndex: number, e: React.MouseEvent) {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const y = e.clientY - rect.top
-    setDragSel({ dayIndex, y1: y, y2: y })
+    const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height))
+    draggingRef.current = { dayIndex, yStart: y }
+    setDragSel(null)
   }
 
   function onMouseMove(e: React.MouseEvent) {
     if (!dragSel) return
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const y = e.clientY - rect.top
+    const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height))
     setDragSel({ ...dragSel, y2: y })
   }
 
+  function onMouseMoveMaybeStart(e: React.MouseEvent, dayIndex: number) {
+    const pending = draggingRef.current
+    if (!pending || pending.dayIndex !== dayIndex) return
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height))
+    const dy = Math.abs(y - pending.yStart)
+    const threshold = 6
+    if (dy >= threshold) {
+      setDragSel({ dayIndex, y1: pending.yStart, y2: y })
+    }
+  }
+
   function onMouseUp() {
-    if (!dragSel) return setDragSel(null)
+    draggingRef.current = null
+    if (!dragSel) { setDragSel(null); return }
     const { y1, y2, dayIndex } = dragSel
     const top = Math.min(y1, y2)
     const bottom = Math.max(y1, y2)
@@ -191,12 +206,13 @@ export function WeekView() {
           {Array.from({ length: 7 }).map((_, dayIndex) => (
             <div
               key={dayIndex}
-              className="relative border-l"
+              className="relative border-l select-none"
               onDrop={(e) => onDrop(e, dayIndex)}
               onDragOver={onDragOver}
               onMouseDown={(e) => onMouseDown(dayIndex, e)}
-              onMouseMove={onMouseMove}
+              onMouseMove={(e) => { onMouseMove(e); onMouseMoveMaybeStart(e, dayIndex) }}
               onMouseUp={onMouseUp}
+              onMouseLeave={onMouseUp}
               style={{ height: HOURS.length * HOUR_PX }}
               ref={dayIndex === 0 ? gridRef : undefined}
             >
@@ -221,7 +237,7 @@ export function WeekView() {
               })}
               {/* drag selection box */}
               {dragSel && dragSel.dayIndex === dayIndex && (
-                <div className="absolute left-1 right-1 bg-accent/30 border border-accent" style={{ top: Math.min(dragSel.y1, dragSel.y2), height: Math.abs(dragSel.y2 - dragSel.y1) }} />
+                <div className="absolute left-1 right-1 bg-accent/20 border border-accent pointer-events-none" style={{ top: Math.min(dragSel.y1, dragSel.y2), height: Math.abs(dragSel.y2 - dragSel.y1) }} />
               )}
             </div>
           ))}

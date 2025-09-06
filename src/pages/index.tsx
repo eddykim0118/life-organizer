@@ -1,8 +1,8 @@
 export function DashboardPage() {
   return <div className="p-2">Today overview and suggestions will appear here.</div>
 }
+import { WeekView } from '@/components/calendar/WeekView'
 export function CalendarPage() {
-  const { WeekView } = require('@/components/calendar/WeekView')
   return <div className="p-2"><WeekView /></div>
 }
 import { useEffect, useMemo, useState } from 'react'
@@ -267,19 +267,19 @@ function KanbanBoard({ tasks, onDrop, refresh, selected, setSelected }: {
     </div>
   )
 }
+import { RoutinesPanel } from './Routines'
 export function RoutinesPage() {
-  const { RoutinesPanel } = require('./Routines')
   return <div className="p-2"><RoutinesPanel /></div>
 }
 export function FinancePage() {
   return <div className="p-2">Finance entries and weekly budget widget coming.</div>
 }
+import { SuggestionsPanel } from './Suggestions'
 export function SuggestionsPage() {
-  const { SuggestionsPanel } = require('./Suggestions')
   return <div className="p-2"><SuggestionsPanel /></div>
 }
+import { SettingsPanel } from './Settings'
 export function SettingsPage() {
-  const { SettingsPanel } = require('./Settings')
   return <div className="p-2"><SettingsPanel /></div>
 }
 
